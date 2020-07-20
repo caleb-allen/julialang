@@ -37,9 +37,9 @@ void print_stderr3(const char * msg1, const char * msg2, const char * msg3)
 /* Absolute path to the path of the current executable, gets filled in by `get_exe_path()` */
 static void * load_library(const char * rel_path, const char * src_dir) {
     char path[2*PATH_MAX + 1] = {0};
-    strncat(path, src_dir, sizeof(path));
-    strncat(path, PATHSEPSTRING, sizeof(path));
-    strncat(path, rel_path, sizeof(path));
+    strncat(path, src_dir, sizeof(path) - 1);
+    strncat(path, PATHSEPSTRING, sizeof(path) - 1);
+    strncat(path, rel_path, sizeof(path) - 1);
 
     void * handle = NULL;
 #if defined(_OS_WINDOWS_)
@@ -94,7 +94,7 @@ const char * get_exe_dir()
     char nonreal_exe_path[PATH_MAX + 1];
     uint32_t exe_path_len = PATH_MAX;
     int ret = _NSGetExecutablePath(nonreal_exe_path, &exe_path_len);
-    if (!ret) {
+    if (ret != 0) {
         print_stderr("ERROR: _NSGetExecutablePath() failed\n");
         exit(1);
     }
@@ -123,7 +123,11 @@ const char * get_exe_dir()
     exe_dir[exe_dir_len] = '\0';
 #endif
     // Finally, convert to dirname
-    dirname(exe_dir);
+    const char * new_dir = dirname(exe_dir);
+    if (new_dir != exe_dir) {
+        // On some plateforms, dirname() mutates.  On others, it does not.
+        memcpy(exe_dir, new_dir, strlen(new_dir)+1);
+    }
     return exe_dir;
 }
 

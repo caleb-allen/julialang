@@ -7,8 +7,7 @@ to re-consult the method table. This info is illegal on any statement that is
 not a call to a generic function.
 """
 struct MethodMatchInfo
-    applicable::Any
-    ambig::Bool
+    results::Union{Missing, MethodLookupResult}
 end
 
 """
